@@ -165,14 +165,22 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
+    
       - name: Sync Optional Worker Secrets
-        if: ${{ secrets.BOT_TOKEN != '' && (github.event_name != 'workflow_dispatch' || inputs.deploy_target == 'worker') }}
-        run: |
-          echo "[*] Setting BOT_TOKEN secret..."
-          echo "${{ secrets.BOT_TOKEN }}" | npx wrangler secret put BOT_TOKEN || true
-          if [ -n "${{ secrets.ADMIN_CHAT_ID }}" ]; then
-            echo "${{ secrets.ADMIN_CHAT_ID }}" | npx wrangler secret put ADMIN_CHAT_ID || true
-          fi
+        if: ${{ github.event_name != 'workflow_dispatch' || inputs.deploy_target == 'worker' }}
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+          ADMIN_CHAT_ID: ${{ secrets.ADMIN_CHAT_ID }}
+        run: |
+          if [ -n "$BOT_TOKEN" ]; then
+            echo "[*] Setting BOT_TOKEN secret..."
+            printf '%s' "$BOT_TOKEN" | npx wrangler secret put BOT_TOKEN
+          else
+            echo "[*] BOT_TOKEN not configured. Skipping."
+          fi
+
+          if [ -n "$ADMIN_CHAT_ID" ]; then
+            printf '%s' "$ADMIN_CHAT_ID" | npx wrangler secret put ADMIN_CHAT_ID
+          fi
